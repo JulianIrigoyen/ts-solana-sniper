@@ -3,7 +3,6 @@ import express from 'express';
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Connection, PublicKey, LAMPORTS_PER_SOL, } from "@solana/web3.js";
 
-import web3 from 'web3';
 
 const sleep = (ms:number) => {
     return new Promise(resolve => setTimeout(resolve, ms));
