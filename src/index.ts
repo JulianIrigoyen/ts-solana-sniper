@@ -1,5 +1,5 @@
+import "dotenv/config";
 import express from "express";
-
 import { TOKEN_PROGRAM_ID, unpackAccount } from "@solana/spl-token";
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { urlToHttpOptions } from "url";
@@ -9,7 +9,8 @@ import {
   Market,
 } from "@raydium-io/raydium-sdk";
 
-const WSS_ENDPOINT = "https://red-divine-flower.solana-mainnet.quiknode.pro//";
+const WSS_ENDPOINT = process.env.PRIVATE_SOLANA_QUICKNODE;
+
 const HTTP_ENDPOINT =
   "https://red-divine-flower.solana-mainnet.quiknode.pro/fix/";
 
@@ -34,7 +35,7 @@ app.listen(port, () => {
   const solanaConnection = new Connection(WSS_ENDPOINT, {
     wsEndpoint: WSS_ENDPOINT,
   });
-  console.log("Connecting");
+  console.log("Connecting to: ", WSS_ENDPOINT);
 
   /* solanaConnection.onAccountChange(
     publicKey,
