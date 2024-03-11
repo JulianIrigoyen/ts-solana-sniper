@@ -124,8 +124,13 @@ async function fetchRaydiumAccounts(signature, connection /* : Connection */) {
           signature,
           solanaConnection
         );
-        const token: Token = await utl.fetchMint(new PublicKey(mainTokenAddr));
-        console.log({ token });
+
+        if (mainTokenAddr) {
+          const token: Token = await utl.fetchMint(
+            new PublicKey(mainTokenAddr)
+          );
+          console.log({ token });
+        } else console.error("No mainTokenAdrr", mainTokenAddr);
       }
     },
     "confirmed"
