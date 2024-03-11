@@ -31,7 +31,7 @@ function generateExplorerUrl(txId) {
 }
 
 function generateDEXExplorerUrl(address) {
-  return `https://dexscreener.com/solana/${address}x`;
+  return `https://dexscreener.com/solana/${address}`;
 }
 
 const utl = new Client();
