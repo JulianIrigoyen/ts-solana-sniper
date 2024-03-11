@@ -1,13 +1,12 @@
 import "dotenv/config";
 import express from "express";
-import { TOKEN_PROGRAM_ID, unpackAccount } from "@solana/spl-token";
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { urlToHttpOptions } from "url";
 import {
   LiquidityPoolKeysV4,
   MARKET_STATE_LAYOUT_V3,
   Market,
 } from "@raydium-io/raydium-sdk";
+import { Client, Token } from "@solflare-wallet/utl-sdk";
 
 const WSS_ENDPOINT = process.env.PRIVATE_SOLANA_QUICKNODE;
 
@@ -31,6 +30,12 @@ function generateExplorerUrl(txId) {
   return `https://solscan.io/tx/${txId}?cluster=mainnet`;
 }
 
+function generateDEXExplorerUrl(address) {
+  return `https://dexscreener.com/solana/${address}x`;
+}
+
+const utl = new Client();
+
 const getAccount = async (address: string, connection) => {
   const publicKey = new PublicKey(address);
   const accountInfo = await connection.getAccountInfo(publicKey);
@@ -40,7 +45,7 @@ const getAccount = async (address: string, connection) => {
   }
 };
 
-async function fetchRaydiumAccounts(signature, connection) {
+async function fetchRaydiumAccounts(signature, connection /* : Connection */) {
   const txId = signature;
   const tx = await connection.getParsedTransaction(txId, {
     maxSupportedTransactionVersion: 0,
@@ -57,18 +62,22 @@ async function fetchRaydiumAccounts(signature, connection) {
   const tokenAIndex = 8;
   const tokenBIndex = 9;
 
-  const tokeAAccount = accounts[tokenAIndex];
-  const tokenBAccount = accounts[tokenBIndex];
+  const tokeAAccount = accounts[tokenAIndex] as PublicKey;
+  const tokenBAccount = accounts[tokenBIndex] as PublicKey;
+  /* 
   const displayData = [
     { Token: "Token A", account: tokeAAccount },
     { Token: "Token B", account: tokenBAccount },
   ];
+  console.table(displayData); */
   console.log("New Raydium  Liquidity Pool Created Found");
   console.log(generateExplorerUrl(txId));
-  console.table(displayData);
-  return tokeAAccount;
-  //console.log(await getAccount(tokeAAccount, connection));
-  // await sleep(2000);
+  const tokenAddress =
+    tokeAAccount.toString() === "So11111111111111111111111111111111111111112"
+      ? tokenBAccount.toString()
+      : tokeAAccount.toString();
+  console.log(generateDEXExplorerUrl(tokenAddress));
+  return tokenAddress;
 }
 
 (async () => {
@@ -104,7 +113,6 @@ async function fetchRaydiumAccounts(signature, connection) {
     "confirmed"
   ); */
 
-  //Listening for logs on the readyus addrr and looking for pool initialization txs
   solanaConnection.onLogs(
     publicKey,
     async ({ logs, err, signature }) => {
@@ -112,12 +120,39 @@ async function fetchRaydiumAccounts(signature, connection) {
 
       if (logs && logs.some((log) => log.includes("initialize2"))) {
         console.log({ signature }, new Date().toLocaleTimeString());
-        const mainTokenAddr = fetchRaydiumAccounts(signature, solanaConnection);
-        //https://api.solscan.io/v2/token/meta?token=EWcvmPdo7jy8zQyDjfHxaCZPzBGoTUc8FXPHhi38NPV5&cluster=
-        //Examples to follow: https://github.com/raydium-io/raydium-sdk-V1-demo/blob/master/src/subNewAmmPool.ts
-        //https://github.com/rpcpool/yellowstone-grpc/blob/master/examples/typescript/src/client.ts
+        const mainTokenAddr = await fetchRaydiumAccounts(
+          signature,
+          solanaConnection
+        );
+        const token: Token = await utl.fetchMint(new PublicKey(mainTokenAddr));
+        console.log({ token });
       }
     },
     "confirmed"
   );
 })();
+
+/* const metaplex = Metaplex.make(solanaConnection);
+  const metadataPda = metaplex
+    .nfts()
+    .pdas()
+    .metadata({
+      mint: new PublicKey("D4sugsn1dmBG9UsV5BggnGHJqSM5mtepqC564Cqm5UmV"),
+    });
+  console.log({ metadataPda });
+  const account = Metadata.fromAccountAddress(solanaConnection, metadataPda);
+  console.log({ account });
+ */
+/* 
+  let mint = await solanaConnection.getParsedAccountInfo(
+    new PublicKey("GQqcCLRTSW3ozcypNpzHC5hcqCB2wronA9X8wDKg131q")
+  );
+
+  // all the token data is here
+  console.log(mint.value.data);
+  
+  */
+
+//https://api.solscan.io/v2/token/meta?token=EWcvmPdo7jy8zQyDjfHxaCZPzBGoTUc8FXPHhi38NPV5&cluster=
+//Examples to follow: https://github.com/raydium-io/raydium-sdk-V1-demo/blob/master/src/subNewAmmPool.ts
+//https://github.com/rpcpool/yellowstone-grpc/blob/master/examples/typescript/src/client.ts

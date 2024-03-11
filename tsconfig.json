@@ -4,8 +4,7 @@
     "module": "commonjs",
     "rootDir": "./src",
     "outDir": "./build",
-    "esModuleInterop": true,
-
+    "esModuleInterop": true
   },
   "include": ["src/**/*"]
 }
